@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажёр по тригонометрии</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        :root {
+            --bg-color: #0d1117;
+            --primary-color: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --subtle-text-color: #8b949e;
+            --accent-color: #58a6ff;
+            --accent-hover: #80b6ff;
+            --correct-glow: #238636;
+            --incorrect-glow: #da3633;
+            --font-family: 'Roboto', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .trainer-container {
+            position: relative; /* Для позиционирования подписи */
+            background-color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s ease-in-out;
+            padding-bottom: 3rem; /* Дополнительное место для подписи */
+        }
+        
+        /* Стили для секций (экранов) */
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .screen.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        h1 {
+            font-size: 2rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+        p {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Область вывода формулы */
+        .formula-display {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 500;
+            min-height: 80px;
+            letter-spacing: 2px;
+            transition: box-shadow 0.3s ease;
+        }
+        .formula-display.correct {
+            box-shadow: 0 0 15px 2px var(--correct-glow);
+        }
+         .formula-display.incorrect {
+            box-shadow: 0 0 15px 2px var(--incorrect-glow);
+        }
+
+        /* Кнопки-компоненты */
+        .parts-container, .options-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .part-btn, .option {
+            background-color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-family: var(--font-family);
+            transition: all 0.2s ease;
+        }
+
+        .part-btn:hover, .option:hover {
+            background-color: var(--border-color);
+            border-color: var(--accent-color);
+        }
+        
+        .part-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: var(--bg-color);
+        }
+        
+        /* Стили для теста */
+        .option {
+            width: 100%;
+            text-align: left;
+        }
+        .option.selected {
+             border-color: var(--accent-color);
+             box-shadow: 0 0 10px 1px var(--accent-color);
+        }
+        .option.correct {
+            border-color: var(--correct-glow);
+            background-color: rgba(35, 134, 54, 0.2);
+        }
+        .option.incorrect {
+            border-color: var(--incorrect-glow);
+            background-color: rgba(218, 54, 51, 0.2);
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            line-height: 1.5;
+            text-align: left;
+            animation: fadeIn 0.5s;
+        }
+        .explanation-box code {
+            background-color: var(--border-color);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Кнопки управления */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        .btn.secondary {
+             background-color: transparent;
+             border: 1px solid var(--border-color);
+             color: var(--accent-color);
+        }
+        .btn.secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Прогресс-бар */
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .progress-bar {
+            width: 0%;
+            height: 10px;
+            background: linear-gradient(90deg, rgba(88,166,255,1) 0%, rgba(58,124,255,1) 100%);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .credits {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: var(--subtle-text-color);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="trainer-container">
+        <div id="start-screen" class="screen active">
+            <h1>Тренажёр по тригонометрии</h1>
+            <p>Добро пожаловать! Этот тренажёр поможет вам выучить 6 основных тригонометрических тождеств в интерактивном режиме. Сначала вы изучите формулы, затем соберёте их своими руками, а в конце пройдёте тест.</p>
+            <div class="controls">
+                <button id="start-btn" class="btn">Начать обучение</button>
+            </div>
+        </div>
+
+        <div id="assembly-screen" class="screen">
+            <h2 id="assembly-title">Этап 1: Изучение</h2>
+            <div id="progress-bar-container" class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <p id="formula-description"></p>
+            <div id="formula-display" class="formula-display"></div>
+            <div id="parts-container" class="parts-container"></div>
+            <div class="controls">
+                 <button id="back-to-learn-btn" class="btn secondary" style="display: none;">Посмотреть теорию</button>
+                 <button id="reset-formula-btn" class="btn secondary" style="display: none;">Сбросить</button>
+                 <button id="next-btn" class="btn">Далее</button>
+            </div>
+        </div>
+        
+        <div id="test-screen" class="screen">
+            <h2 id="question-title">Финальный тест</h2>
+            <p id="question-text"></p>
+            <div id="options-container" class="options-container"></div>
+            <div id="answer-explanation" class="explanation-box"></div>
+            <div class="controls">
+                <button id="submit-answer-btn" class="btn">Ответить</button>
+            </div>
+        </div>
+        
+        <div id="result-screen" class="screen">
+            <h1>Тест завершён!</h1>
+            <p id="result-text"></p>
+            <div class="formula-display" style="font-size: 3rem;" id="final-score"></div>
+            <div class="controls">
+                <button id="restart-btn" class="btn">Пройти заново</button>
+            </div>
+        </div>
+
+        <div class="credits">By Timophei Hubitski 10Б</div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const screens = {
+        start: document.getElementById('start-screen'),
+        assembly: document.getElementById('assembly-screen'),
+        test: document.getElementById('test-screen'),
+        result: document.getElementById('result-screen'),
+    };
+
+    const buttons = {
+        start: document.getElementById('start-btn'),
+        next: document.getElementById('next-btn'),
+        backToLearn: document.getElementById('back-to-learn-btn'),
+        resetFormula: document.getElementById('reset-formula-btn'),
+        submitAnswer: document.getElementById('submit-answer-btn'),
+        restart: document.getElementById('restart-btn'),
+    };
+    
+    const elements = {
+        assemblyTitle: document.getElementById('assembly-title'),
+        formulaDisplay: document.getElementById('formula-display'),
+        partsContainer: document.getElementById('parts-container'),
+        formulaDescription: document.getElementById('formula-description'),
+        progressBar: document.getElementById('progress-bar'),
+        
+        questionTitle: document.getElementById('question-title'),
+        questionText: document.getElementById('question-text'),
+        optionsContainer: document.getElementById('options-container'),
+        answerExplanation: document.getElementById('answer-explanation'),
+
+        finalScore: document.getElementById('final-score'),
+        resultText: document.getElementById('result-text'),
+    };
+
+    const formulas = [
+        {
+            full: "sin²α + cos²α = 1",
+            description: "Основное тригонометрическое тождество. Сумма квадратов синуса и косинуса одного угла равна единице.",
+            parts: ["sin²α", "+", "cos²α", "=", "1"]
+        },
+        {
+            full: "tgα ⋅ ctgα = 1",
+            description: "Произведение тангенса и котангенса одного и того же угла равно единице.",
+            parts: ["tgα", "⋅", "ctgα", "=", "1"]
+        },
+        {
+            full: "sinα / cosα = tgα",
+            description: "Тангенс угла - это отношение синуса этого угла к его косинусу.",
+            parts: ["sinα", "/", "cosα", "=", "tgα"]
+        },
+        {
+            full: "cosα / sinα = ctgα",
+            description: "Котангенс угла - это отношение косинуса этого угла к его синусу.",
+            parts: ["cosα", "/", "sinα", "=", "ctgα"]
+        },
+        {
+            full: "1 + tg²α = 1 / cos²α",
+            description: "Это тождество связывает тангенс и косинус.",
+            parts: ["1", "+", "tg²α", "=", "1", "/", "cos²α"]
+        },
+        {
+            full: "1 + ctg²α = 1 / sin²α",
+            description: "А это тождество связывает котангенс и синус.",
+            parts: ["1", "+", "ctg²α", "=", "1", "/", "sin²α"]
+        }
+    ];
+
+    const testQuestions = [
+        {
+            question: "Чему равно выражение <code>1 - cos²α</code>?",
+            options: ["sin²α", "tg²α", "1"],
+            answer: "sin²α",
+            explanation: "Это следствие из основного тождества <code>sin²α + cos²α = 1</code>. Если перенести <code>cos²α</code> в правую часть, то получится <code>sin²α = 1 - cos²α</code>."
+        },
+        {
+            question: "Выберите выражение, равное <code>ctgα</code>:",
+            options: ["sinα / cosα", "tgα ⋅ sinα", "1 / tgα"],
+            answer: "1 / tgα",
+            explanation: "Так как <code>tgα ⋅ ctgα = 1</code>, мы можем выразить котангенс, разделив обе части на <code>tgα</code>. Получаем: <code>ctgα = 1 / tgα</code>."
+        },
+        {
+            question: "Упростите выражение: <code>tgα ⋅ cosα</code>",
+            options: ["cos²α", "sinα", "1"],
+            answer: "sinα",
+            explanation: "Мы знаем, что <code>tgα = sinα / cosα</code>. Подставим это в выражение: <code>(sinα / cosα) ⋅ cosα</code>. Знаменатель <code>cosα</code> сокращается, и остаётся только <code>sinα</code>."
+        },
+        {
+            question: "Какое выражение равно <code>1</code>?",
+            options: ["sin²α - cos²α", "1 / cos²α - tg²α", "1 + sin²α"],
+            answer: "1 / cos²α - tg²α",
+            explanation: "Это следует из тождества <code>1 + tg²α = 1 / cos²α</code>. Если перенести <code>tg²α</code> в правую часть, мы получим <code>1 = 1 / cos²α - tg²α</code>."
+        },
+        {
+            question: "Закончите тождество: <code>1 + ctg²α = ?</code>",
+            options: ["1 / cos²α", "tg²α", "1 / sin²α"],
+            answer: "1 / sin²α",
+            explanation: "Это одно из основных тождеств, которое связывает котангенс и синус: <code>1 + ctg²α = 1 / sin²α</code>."
+        },
+        {
+            question: "Выберите **неверное** тождество:",
+            options: ["sin²α + cos²α = 1", "tgα = cosα / sinα", "tgα ⋅ ctgα = 1"],
+            answer: "tgα = cosα / sinα",
+            explanation: "Тождество неверно. Тангенс определяется как <code>tgα = sinα / cosα</code>. Выражение <code>cosα / sinα</code> равно котангенсу, <code>ctgα</code>."
+        }
+    ];
+
+    let currentFormulaIndex = 0;
+    let currentMode = 'learn'; // 'learn', 'assemble'
+    let assembledParts = [];
+    
+    let currentQuestionIndex = 0;
+    let userScore = 0;
+    
+    // --- UTILITY FUNCTIONS ---
+    function switchScreen(screenName) {
+        Object.values(screens).forEach(screen => screen.classList.remove('active'));
+        screens[screenName].classList.add('active');
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // --- ASSEMBLY STAGE LOGIC ---
+    function loadFormula(index) {
+        const formula = formulas[index];
+        elements.formulaDisplay.classList.remove('correct', 'incorrect');
+        
+        updateProgressBar();
+        
+        if (currentMode === 'learn') {
+            assembledParts = [];
+            elements.assemblyTitle.textContent = `Этап 1: Изучение (${index + 1}/${formulas.length})`;
+            elements.formulaDescription.innerHTML = formula.description;
+            elements.formulaDisplay.innerHTML = formula.full;
+            elements.partsContainer.innerHTML = "";
+            buttons.resetFormula.style.display = 'none';
+            buttons.backToLearn.style.display = 'none';
+            buttons.next.textContent = 'Собрать формулу';
+            buttons.next.style.display = 'inline-block';
+        } else {
+            elements.assemblyTitle.textContent = `Этап 2: Сборка (${index + 1}/${formulas.length})`;
+            elements.formulaDescription.innerHTML = 'Теперь соберите эту формулу из предложенных частей, нажимая на них в правильном порядке.';
+            elements.formulaDisplay.textContent = assembledParts.join(' ');
+            buttons.resetFormula.style.display = 'inline-block';
+            buttons.backToLearn.style.display = 'inline-block';
+            buttons.next.textContent = 'Далее';
+            buttons.next.style.display = 'none'; // Скрыть кнопку "Далее" до правильной сборки
+            renderParts(formula.parts);
+        }
+    }
+    
+    function renderParts(parts) {
+        elements.partsContainer.innerHTML = "";
+        const shuffledParts = shuffleArray([...parts]);
+        shuffledParts.forEach(part => {
+            const btn = document.createElement('button');
+            btn.className = 'part-btn';
+            btn.innerHTML = part;
+            btn.addEventListener('click', () => handlePartClick(btn, part));
+            elements.partsContainer.appendChild(btn);
+        });
+        // Восстанавливаем отключенные кнопки, если пользователь возвращается
+        assembledParts.forEach(assembledPart => {
+            let found = false;
+            document.querySelectorAll('.part-btn').forEach(btn => {
+                if (!found && !btn.disabled && btn.innerHTML === assembledPart) {
+                    btn.disabled = true;
+                    found = true;
+                }
+            });
+        });
+    }
+
+    function handlePartClick(btn, part) {
+        assembledParts.push(part);
+        elements.formulaDisplay.textContent = assembledParts.join(' ');
+        btn.disabled = true;
+
+        const correctSequence = formulas[currentFormulaIndex].parts;
+        const currentPartIndex = assembledParts.length - 1;
+
+        if (assembledParts[currentPartIndex] !== correctSequence[currentPartIndex]) {
+            elements.formulaDisplay.classList.add('incorrect');
+            setTimeout(() => {
+                assembledParts = [];
+                elements.formulaDisplay.textContent = "";
+                elements.formulaDisplay.classList.remove('incorrect');
+                document.querySelectorAll('.part-btn').forEach(b => b.disabled = false);
+            }, 800);
+            return;
+        }
+
+        if (assembledParts.length === correctSequence.length) {
+            elements.formulaDisplay.classList.remove('incorrect');
+            elements.formulaDisplay.classList.add('correct');
+            buttons.next.style.display = 'inline-block';
+        }
+    }
+    
+    function updateProgressBar() {
+        const totalSteps = formulas.length * 2;
+        const completedSteps = currentFormulaIndex * 2 + (currentMode === 'assemble' ? 1 : 0);
+        const progress = (completedSteps / totalSteps) * 100;
+        elements.progressBar.style.width = `${progress}%`;
+    }
+
+    buttons.start.addEventListener('click', () => {
+        switchScreen('assembly');
+        loadFormula(currentFormulaIndex);
+    });
+
+    buttons.next.addEventListener('click', () => {
+        if (currentMode === 'learn') {
+            currentMode = 'assemble';
+            loadFormula(currentFormulaIndex);
+        } else {
+            currentMode = 'learn';
+            currentFormulaIndex++;
+            if (currentFormulaIndex < formulas.length) {
+                loadFormula(currentFormulaIndex);
+            } else {
+                switchScreen('test');
+                loadQuestion(currentQuestionIndex);
+            }
+        }
+    });
+    
+    buttons.resetFormula.addEventListener('click', () => {
+        assembledParts = [];
+        elements.formulaDisplay.textContent = "";
+        elements.formulaDisplay.classList.remove('correct', 'incorrect');
+        document.querySelectorAll('.part-btn').forEach(b => b.disabled = false);
+    });
+
+    buttons.backToLearn.addEventListener('click', () => {
+        currentMode = 'learn';
+        loadFormula(currentFormulaIndex);
+    });
+
+
+    // --- TEST STAGE LOGIC ---
+    let selectedOption = null;
+
+    function loadQuestion(index) {
+        selectedOption = null;
+        const question = testQuestions[index];
+        elements.questionTitle.textContent = `Вопрос ${index + 1}/${testQuestions.length}`;
+        elements.questionText.innerHTML = question.question;
+        
+        elements.optionsContainer.innerHTML = '';
+        const shuffledOptions = shuffleArray([...question.options]);
+        shuffledOptions.forEach(opt => {
+            const optionEl = document.createElement('button');
+            optionEl.className = 'option';
+            optionEl.innerHTML = opt;
+            optionEl.addEventListener('click', () => {
+                if (document.querySelector('.option.selected')) {
+                    document.querySelector('.option.selected').classList.remove('selected');
+                }
+                optionEl.classList.add('selected');
+                selectedOption = optionEl;
+            });
+            elements.optionsContainer.appendChild(optionEl);
+        });
+
+        elements.answerExplanation.style.display = 'none';
+        buttons.submitAnswer.textContent = "Ответить";
+        buttons.submitAnswer.onclick = checkAnswer;
+    }
+    
+    function checkAnswer() {
+        if (!selectedOption) return;
+
+        const question = testQuestions[currentQuestionIndex];
+        const userAnswer = selectedOption.innerHTML;
+        
+        document.querySelectorAll('.option').forEach(opt => {
+            opt.style.pointerEvents = 'none'; // Блокируем клики на опциях
+        });
+
+        if (userAnswer === question.answer) {
+            userScore++;
+            selectedOption.classList.add('correct');
+        } else {
+            selectedOption.classList.add('incorrect');
+            document.querySelectorAll('.option').forEach(opt => {
+                if(opt.innerHTML === question.answer) {
+                    opt.classList.add('correct');
+                }
+            });
+        }
+        
+        elements.answerExplanation.innerHTML = `<b>Пояснение:</b> ${question.explanation}`;
+        elements.answerExplanation.style.display = 'block';
+        
+        buttons.submitAnswer.textContent = "Следующий вопрос";
+        buttons.submitAnswer.onclick = nextQuestion;
+    }
+    
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < testQuestions.length) {
+            loadQuestion(currentQuestionIndex);
+        } else {
+            showResults();
+        }
+    }
+    
+    function showResults() {
+        switchScreen('result');
+        elements.finalScore.textContent = `${userScore} / ${testQuestions.length}`;
+        let resultMessage = "";
+        const percentage = (userScore / testQuestions.length) * 100;
+        if (percentage === 100) {
+            resultMessage = "Отлично! Все ответы верны. Вы прекрасно знаете формулы!";
+        } else if (percentage >= 70) {
+            resultMessage = "Хороший результат! Еще немного практики, и будет идеально.";
+        } else if (percentage >= 40) {
+            resultMessage = "Неплохо, но есть над чем поработать. Попробуйте пройти обучение еще раз.";
+        } else {
+            resultMessage = "Стоит повторить материал. Начните обучение заново, чтобы лучше запомнить формулы.";
+        }
+        elements.resultText.textContent = resultMessage;
+    }
+    
+    buttons.restart.addEventListener('click', () => {
+        currentFormulaIndex = 0;
+        currentMode = 'learn';
+        assembledParts = [];
+        currentQuestionIndex = 0;
+        userScore = 0;
+        
+        switchScreen('start');
+    });
+
+});
+</script>
+
+</body>
+</html>
